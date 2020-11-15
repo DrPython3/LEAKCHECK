@@ -2,40 +2,42 @@
 #encoding: utf-8
 #name: leakcheck
 #description: checks given combolists against a private lib of leaks
-#version: 0.1 / 2020-10-16
+#version: 0.11, 2020-11-15
 #author: DrPython3
-#todo: write dbcount(), write new function for maintining the db and much more ...
+#TODO: start writing the code, more information below ...
 
-#((<-- *** NEEDED MODULES *** -->))
+#((<-- *** NEEDED PACKAGES *** -->))
 
+#TODO: Add packages needed ...
 import ctypes, os, sys, threading
 import colorama
 from colorama import *
 init()
-print(Fore.LIGHTGREEN_EX + Style.BRIGHT + '')
+print(Fore.LIGHTWHITE_EX + '')
 
-#((<-- *** VARIOUS STUFF *** -->))
+#((<-- *** Variables, Functions, etc. *** -->))
 
-public = 0 #for stats in title bar
-private = 0 #for stats in title bar
-leakcount = 0 #for counting leaks in db
+runcounter = int(0) #just a counter for handling menu optically.
+public = int(0) #for stats in title bar
+private = int(0) #for stats in title bar
+leakcount = int(0) #for counting leaks in db
 leakdic = [] #for counting leaks in db
 combofile = '' #file with combos for checker, updater etc.
-newcount = 0 #new combos processed by checker, updater etc.
+newcount = int(0) #new combos processed by checker, updater etc.
 newleaks = [] #combos to check, import etc.
 
 logo1 = '''
-@@@      @@@@@@@@  @@@@@@  @@@  @@@  @@@@@@@ @@@  @@@ @@@@@@@@  @@@@@@@ @@@  @@@
-@@!      @@!      @@!  @@@ @@!  !@@ !@@      @@!  @@@ @@!      !@@      @@!  !@@
-@!!      @!!!:!   @!@!@!@! @!@@!@!  !@!      @!@!@!@! @!!!:!   !@!      @!@@!@!
-!!:      !!:      !!:  !!! !!: :!!  :!!      !!:  !!! !!:      :!!      !!: :!!
+@@@      @@@@@@@@  @@@@@@  @@@  @@@  @@@@@@@ @@@  @@@ @@@@@@@@  @@@@@@@ @@@  @@@ 
+@@!      @@!      @@!  @@@ @@!  !@@ !@@      @@!  @@@ @@!      !@@      @@!  !@@ 
+@!!      @!!!:!   @!@!@!@! @!@@!@!  !@!      @!@!@!@! @!!!:!   !@!      @!@@!@!  
+!!:      !!:      !!:  !!! !!: :!!  :!!      !!:  !!! !!:      :!!      !!: :!!  
 : ::.: : : :: ::   :   : :  :   :::  :: :: :  :   : : : :: ::   :: :: :  :   ::: '''
 
 logo2 = '''
 ________________________________________________________________________________
            personal antipublic db with checker | DrPython3 (C) 2020
 
-   support this tool with donations (BTC): 1M8PrpZ3VFHuGrnYJk63MtoEmoJxwiUxYf
+   support this tool with donations (BTC): 1MiKuJrTCNST3haCX6sCnmMWTxJ4ZXtYgw
            (!) all donations help with providing future updates (!)'''
 
 mainmenu = '''
@@ -58,43 +60,51 @@ Do you like the tool?
 Then send a donation, please: (BTC) 1MiKuJrTCNST3haCX6sCnmMWTxJ4ZXtYgw
 All donations help with providing future updates and upgrades.'''
 
-#((<-- *** FUNCTIONS *** -->))
-
-#cleaner - clear screen on purpose:
-def cleaner():
+#clean - clear screen on purpose:
+def clean():
     try:
         if os.name == 'nt':
             os.system('cls')
         else:
             os.system('clear')
-    except:
-        pass
+    except: pass
 
 #menu - screen with main menu for user:
 def menu():
-    cleaner()
-    print(Fore.LIGHTWHITE_EX + Style.BRIGHT + mainmenu)
-    what = input(Fore.LIGHTYELLOW_EX + Style.BRIGHT + '\nYOUR CHOICE: ')
+    global runcounter
+    clean()
+    print(Fore.LIGHTRED_EX + Style.BRIGHT + str(logo1))
+    if runcounter < 1:
+        print(Fore.LIGHTRED_EX + Style.BRIGHT + str(logo2))
+    else: pass
+    print(Fore.LIGHTWHITE_EX + str(mainmenu))
+    runcounter += 1
+    what = int(input(Fore.LIGHTYELLOW_EX + Style.BRIGHT + '\nYOUR CHOICE: '))
     if what == 1:
+        # TODO: write function dbcheck() ...
         dbcheck()
-        #TODO: write function dbcheck()
     elif what == 2:
         dbupdate()
     elif what == 3:
         dbcount()
+    elif what == 4:
+        #TODO: write function dbmaintain() ...
+        clean()
+        print(Fore.LIGHTRED_EX + Style.BRIGHT + 'Sorry, option not included yet ...\n')
+        input(Fore.LIGHTWHITE_EX + Style.BRIGHT + '\nPress [ENTER] to return to main menu.')
+        return None
     else:
-        cleaner()
+        clean()
         sys.exit(Fore.LIGHTRED_EX + Style.BRIGHT + exitmsg)
 
 #dbcount - delivers amount of leaks currently saved in db, actually not in use:
 def dbcount():
     global leakcount
-    cleaner()
+    clean()
     print(Fore.LIGHTWHITE_EX + Style.BRIGHT + '\nWait a moment, please (...)\n')
     try:
         leakdic = open('leak.db', 'r').read().splitlines()
-        vics1 = len(leakdic)
-        leakcount = int(vics1)
+        leakcount = int(len(leakdic))
         leakdic.clear()
         print(Fore.LIGHTGREEN_EX + Style.BRIGHT + 'TOTAL AMOUNT OF LEAKS IN DB: ' + str(leakcount) + '\n')
         input(Fore.LIGHTWHITE_EX + Style.BRIGHT + '\nPress [ENTER] to return to main menu.')
@@ -107,11 +117,11 @@ def dbcount():
 #dbupdate - adds leaks from a combolist to the db:
 def dbupdate():
     global newcount
-    cleaner()
+    clean()
     print(Fore.LIGHTGREEN_EX + Style.BRIGHT + '\n### COMBOLIST-IMPORT TO YOUR LEAKCHECK DB ###\n\n')
     combofile = input(Fore.LIGHTWHITE_EX + Style.BRIGHT + 'Enter Name of your Combofile, e.g. combos.txt: ')
     if combofile == '':
-        cleaner()
+        clean()
         print(Fore.LIGHTRED_EX + Style.BRIGHT + '\nNo filename entered.')
         input(Fore.LIGHTRED_EX + Style.BRIGHT + '\nPress [ENTER] to return to main menu.')
         return None
@@ -120,7 +130,7 @@ def dbupdate():
             print(Fore.LIGHTGREEN_EX + Style.BRIGHT + '\n\nStarting the Import of your Combofile ...\n\n')
             newleaks = open(combofile, 'r').read().splitlines()
         except:
-            cleaner()
+            clean()
             print(Fore.LIGHTRED_EX + Style.BRIGHT + '\nCould not find or read combofile.')
             input(Fore.LIGHTRED_EX + Style.BRIGHT + '\nPress [ENTER] to return to main menu.')
             return None
@@ -129,7 +139,7 @@ def dbupdate():
     except:
         counter = 0
     if counter == 0:
-        cleaner()
+        clean()
         print(Fore.LIGHTRED_EX + Style.BRIGHT + '\nNo Combos found for Import.')
         input(Fore.LIGHTRED_EX + Style.BRIGHT + '\nPress [ENTER] to return to main menu.')
         return None
@@ -153,7 +163,7 @@ def dbupdate():
     input(Fore.LIGHTWHITE_EX + Style.BRIGHT + '\nPress [ENTER] to return to main menu.')
     return None
 
-#dbcleaner - deletes duplicates from the db:
+#dbmaintain - deletes duplicates from the db:
 #todo: write code of db cleaner.
 
 #dbresult - writes results to the files and adds automatically private leaks to db:
@@ -166,8 +176,5 @@ def dbupdate():
 #todo: write code of the startup for the checker.
 
 #((<<-- *** M*A*I*N *** -->>))
-cleaner()
-print(logo1)
-print(logo2)
-print(mainmenu)
-menu()
+while True:
+    menu()
